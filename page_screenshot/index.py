@@ -157,6 +157,11 @@ class PageScreenshot:
         self.driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
         return self
 
+    def url_change(self, url):
+        self.model.url = url
+        self.driver.get(url=self.model.url)
+        time.sleep(.5)
+
     def capture(self):
         """
         生成网页截图文件
