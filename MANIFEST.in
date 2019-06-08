@@ -1,0 +1,4 @@
+include README.md LICENSE
+recursive-include page_screenshot *
+recursive-include docs *
+recursive-exclude tests *

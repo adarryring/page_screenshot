@@ -5,6 +5,9 @@
 
 ## Example
 ```py
+from page_screenshot.run_factory import run
+
+run('https://baidu.com')
 ```
 
 ## Communication
