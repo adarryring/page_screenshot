@@ -31,11 +31,14 @@ def screenshot_for_pc_and_phone(url, responsive_height=None):
     :param url: url
     :return: void
     """
-    page_screenshot_model = PageScreenshotModel.build(url)
-    if responsive_height is not None:
-        page_screenshot_model.init_height = responsive_height
-    screenshot_for_pc(page_screenshot_model=page_screenshot_model)
-    screenshot_for_phone(page_screenshot_model=page_screenshot_model)
+    page_screenshot_model = screenshot_for_pc(url=url, responsive_height=responsive_height)
+    page_screenshot = PageScreenshot(page_screenshot_model)
+    screenshot(page_screenshot_model, page_screenshot)
+
+    page_screenshot_model = screenshot_for_phone(page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
+    screenshot(page_screenshot_model, page_screenshot)
+
+    page_screenshot.close()
 
 
 def screenshot_for_pc(url=None, page_screenshot_model=None, responsive_height=None):
@@ -45,14 +48,14 @@ def screenshot_for_pc(url=None, page_screenshot_model=None, responsive_height=No
     :param responsive_height: responsive_height
     :param url: url
     :param page_screenshot_model: model
-    :return: void
+    :return: page_screenshot_model
     """
     if page_screenshot_model is None:
         page_screenshot_model = PageScreenshotModel.build(url)
     if responsive_height is not None:
         page_screenshot_model.init_height = responsive_height
     page_screenshot_model.set_outer_width(OUTER_PC_WIDTH)
-    PageScreenshot(page_screenshot_model).capture()
+    return page_screenshot_model
 
 
 def screenshot_for_phone(url=None, page_screenshot_model=None, responsive_height=None):
@@ -62,7 +65,7 @@ def screenshot_for_phone(url=None, page_screenshot_model=None, responsive_height
     :param responsive_height: responsive_height
     :param url: url
     :param page_screenshot_model: model
-    :return: void
+    :return: page_screenshot_model
     """
     if page_screenshot_model is None:
         page_screenshot_model = PageScreenshotModel.build(url)
@@ -70,4 +73,18 @@ def screenshot_for_phone(url=None, page_screenshot_model=None, responsive_height
         page_screenshot_model.init_height = responsive_height
     page_screenshot_model.set_outer_width(OUTER_PHONE_WIDTH)
     page_screenshot_model.add_to_js_file_name('phone')
-    PageScreenshot(page_screenshot_model).capture()
+    return page_screenshot_model
+
+
+def screenshot(page_screenshot_model=None, page_screenshot=None):
+    """
+    screenshot now
+
+    :param page_screenshot_model: model
+    :param page_screenshot: page_screenshot
+    :return:
+    """
+    if page_screenshot is None:
+        PageScreenshot(page_screenshot_model).capture()
+    else:
+        page_screenshot.use_driver(page_screenshot_model).capture()

@@ -147,6 +147,16 @@ class PageScreenshot:
         driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
         return driver
 
+    def use_driver(self, page_screenshot_model: PageScreenshotModel):
+        """
+        init
+
+        :param page_screenshot_model: PageScreenshotModel
+        """
+        self.model = page_screenshot_model
+        self.driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
+        return self
+
     def capture(self):
         """
         生成网页截图文件
@@ -162,10 +172,17 @@ class PageScreenshot:
             logging.info('have not set file_name, go on')
             self.model.file_name = str(int(time.time()))
         logging.info('merge image ...')
-        self.driver.quit()
         self.merge()
         logging.info('remove_temp_file ...')
         self.remove_temp_file()
+
+    def close(self):
+        """
+        close
+
+        :return: void
+        """
+        self.driver.quit()
 
     def remove_temp_file(self):
         """
