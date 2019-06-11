@@ -203,6 +203,18 @@ class PageScreenshot:
             except Exception:
                 print('no image file, go on')
 
+    @staticmethod
+    def filter_file_name(file_name: str):
+        """
+        过滤非法文件名称的字符
+        :param file_name: 文件名
+        :return: 正确的文件名
+        """
+        illegal_char = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+        for i in illegal_char:
+            file_name = file_name.replace(i, '')
+        return file_name
+
     def merge(self):
         """
         拼接滚动截图文件
@@ -216,5 +228,12 @@ class PageScreenshot:
         merge_image = Image.new('RGBA', (w, h * self.model.count_image))
         for i in range(self.model.count_image):
             merge_image.paste(Image.open(template_file_name % i), (0, i * h))
-        merge_image.save(template_file_name % self.model.file_name)
+
+        # save to one image file
+        self.model.file_name = self.filter_file_name(self.model.file_name)
+        try:
+            merge_image.save(template_file_name % self.model.file_name)
+        except Exception as e:
+            merge_image.save(template_file_name % str(int(time.time())))
+            logging.info(e)
         time.sleep(1)
