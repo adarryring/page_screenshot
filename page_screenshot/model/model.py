@@ -17,7 +17,7 @@ class PageScreenshotModel:
         page_screenshot_model.init_height = init_height
         return page_screenshot_model
 
-    timestamp_with_folder = TIMESTAMP_WITH_FOLDER
+    # timestamp_with_folder = TIMESTAMP_WITH_FOLDER
     url = URL
     img_save_path = IMG_SAVE_PATH
 

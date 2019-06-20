@@ -9,22 +9,102 @@
 """
 
 import io
+import os
+import time
+import shutil
 import logging
-from page_screenshot.model.model import PageScreenshotModel, OUTER_PC_WIDTH, OUTER_PHONE_WIDTH
+import threading
+from page_screenshot.model.model import PageScreenshotModel, OUTER_PC_WIDTH, OUTER_PHONE_WIDTH, TIMESTAMP_WITH_FOLDER
 from page_screenshot.index import PageScreenshot
+import random
 
 
-def run_for_url_list(file_path, responsive_height=None):
+def make_unique_folder(path, timestamp_with_folder=TIMESTAMP_WITH_FOLDER):
+    """
+    创建时间戳文件夹
+
+    :param path: 文件路径
+    :param timestamp_with_folder: 文件夹随机码
+    :return: 文件夹路径
+    """
+    t = ''
+    if timestamp_with_folder:
+        t = '/' + str(int(time.time())) + str(random.randint(0, 1000000))
+    folder = path + t
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+    return folder
+
+
+def run_thread(url_list=None, responsive_height=None):
+    if url_list is None or 0 == len(url_list):
+        return
+    page_screenshot = PageScreenshot()
+
+    # 建立唯一的目录
+    url = url_list[0]
+    page_screenshot_model = screenshot_for_pc(url=url, responsive_height=responsive_height)
+    default_img_save_path = page_screenshot_model.img_save_path
+    folder = make_unique_folder(default_img_save_path)
+    # folder = default_img_save_path
+    for url in url_list:
+        logging.info('url %s' % url)
+        # 修改默认目录，重复利用model对象
+        # pc
+        page_screenshot_model = screenshot_for_pc(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
+        page_screenshot_model.img_save_path = folder
+        logging.info('page_screenshot_model.url %s' % page_screenshot_model.url)
+        page_screenshot.capture(page_screenshot_model)
+
+        time.sleep(1)
+
+        # phone
+        # page_screenshot_model = screenshot_for_phone(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
+        # page_screenshot_model.img_save_path = folder
+        # page_screenshot.capture(page_screenshot_model)
+    # close
+    page_screenshot.close()
+
+    logging.info('move file ...')
+    # move file to default path
+    for f in os.listdir(folder):
+        shutil.move(folder + '/' + f, default_img_save_path + '/' + f)
+
+    # remove folder
+    # noinspection PyBroadException
+    try:
+        shutil.rmtree(folder)
+    except Exception as e:
+        logging.info('remove folder error %s' % e)
+
+
+def run_for_url_list(file_path, responsive_height=None, count_thread=10):
     with io.open(file_path, encoding='utf-8') as f:
         url_list = f.read()
     url_list = url_list.split('\n')
     if len(url_list) == 0:
         logging.info('file have not a url')
-    page_screenshot = screenshot_for_pc_and_phone(url_list[0], responsive_height)
-    url_list.remove(url_list[0])
-    for url in url_list:
-        page_screenshot = screenshot_for_pc_and_phone(url, responsive_height, page_screenshot)
-    page_screenshot.close()
+
+    if count_thread <= 0:
+        count_thread = 10
+    if len(url_list) < count_thread:
+        count_thread = len(url_list)
+    count_url_per_thread = len(url_list) / count_thread
+    threads = []
+    count_url_per_thread = int(count_url_per_thread)
+    last = count_thread - 1
+
+    for i in range(count_thread):
+        start = i * count_url_per_thread
+        if i == last:
+            threads.append(threading.Thread(target=run_thread, args=(url_list[start:], responsive_height)))
+        else:
+            threads.append(threading.Thread(target=run_thread, args=(url_list[start: start + count_url_per_thread], responsive_height)))
+
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
 
 
 def run(url, responsive_height=None):
@@ -35,11 +115,12 @@ def run(url, responsive_height=None):
     :param url: url
     :return: void
     """
-    page_screenshot = screenshot_for_pc_and_phone(url, responsive_height)
+    page_screenshot = PageScreenshot()
+    screenshot_for_pc_and_phone(url, page_screenshot, responsive_height)
     page_screenshot.close()
 
 
-def screenshot_for_pc_and_phone(url, responsive_height=None, page_screenshot=None):
+def screenshot_for_pc_and_phone(url, page_screenshot, responsive_height=None):
     """
     pc and phone
 
@@ -49,16 +130,10 @@ def screenshot_for_pc_and_phone(url, responsive_height=None, page_screenshot=Non
     :return: void
     """
     page_screenshot_model = screenshot_for_pc(url=url, responsive_height=responsive_height)
-    if page_screenshot is None:
-        page_screenshot = PageScreenshot(page_screenshot_model)
-    else:
-        page_screenshot.url_change(url)
-    screenshot(page_screenshot_model, page_screenshot)
+    page_screenshot.capture(page_screenshot_model)
 
     page_screenshot_model = screenshot_for_phone(page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
-    screenshot(page_screenshot_model, page_screenshot)
-
-    return page_screenshot
+    page_screenshot.capture(page_screenshot_model)
 
 
 def screenshot_for_pc(url=None, page_screenshot_model=None, responsive_height=None):
@@ -72,6 +147,8 @@ def screenshot_for_pc(url=None, page_screenshot_model=None, responsive_height=No
     """
     if page_screenshot_model is None:
         page_screenshot_model = PageScreenshotModel.build(url)
+    if url is not None:
+        page_screenshot_model.url = url
     if responsive_height is not None:
         page_screenshot_model.init_height = responsive_height
     page_screenshot_model.set_outer_width(OUTER_PC_WIDTH)
@@ -89,22 +166,10 @@ def screenshot_for_phone(url=None, page_screenshot_model=None, responsive_height
     """
     if page_screenshot_model is None:
         page_screenshot_model = PageScreenshotModel.build(url)
+    if url is not None:
+        page_screenshot_model.url = url
     if responsive_height is not None:
         page_screenshot_model.init_height = responsive_height
     page_screenshot_model.set_outer_width(OUTER_PHONE_WIDTH)
     page_screenshot_model.add_to_js_file_name('phone')
     return page_screenshot_model
-
-
-def screenshot(page_screenshot_model=None, page_screenshot=None):
-    """
-    screenshot now
-
-    :param page_screenshot_model: model
-    :param page_screenshot: page_screenshot
-    :return:
-    """
-    if page_screenshot is None:
-        PageScreenshot(page_screenshot_model).capture()
-    else:
-        page_screenshot.use_driver(page_screenshot_model).capture()

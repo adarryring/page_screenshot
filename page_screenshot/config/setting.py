@@ -8,7 +8,7 @@ import logging
 LOG_LEVEL = logging.INFO
 DEFAULT_IMG_SUFFIX = '.png'
 
-TIMESTAMP_WITH_FOLDER = False
+TIMESTAMP_WITH_FOLDER = True
 URL = 'http://huaban.com/'
 IMG_SAVE_PATH = 'C:/page_screenshot'
 BASE_HEIGHT = 900

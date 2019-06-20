@@ -24,8 +24,8 @@ def make_unique_folder(path):
     :return: 文件夹路径
     """
     t = ''
-    if TIMESTAMP_WITH_FOLDER:
-        t = '/' + str(int(time.time()))
+    # if TIMESTAMP_WITH_FOLDER:
+    #     t = '/' + str(int(time.time()))
     folder = path + t
     if not os.path.isdir(folder):
         os.makedirs(folder)
@@ -33,13 +33,11 @@ def make_unique_folder(path):
 
 
 class PageScreenshot:
-    def __init__(self, page_screenshot_model: PageScreenshotModel):
+    def __init__(self):
         """
         init
-
-        :param page_screenshot_model: PageScreenshotModel
         """
-        self.model = page_screenshot_model
+        self.model = None
         self.driver = self.take_driver()
 
     def print_w_h(self):
@@ -137,37 +135,30 @@ class PageScreenshot:
         # options.add_argument('--switcher-file=C:/Users/xh/Documents/PyCharmProjects/page_screenshot/switch_360_chrome.txt')  # 修改成360浏览器
         options.add_argument('disable-infobars')
 
-        driver = webdriver.Chrome(options=options, executable_path=self.model.chrome_driver_path)
-        driver.get(url=self.model.url)
-        time.sleep(.5)
-        driver.set_window_position(self.model.init_window_position_x, self.model.init_window_position_y)
-        # driver.execute_script("document.body.style.zoom='125%'")  # 修改成360浏览器
-        driver.execute_script('document.body.parentNode.style.overflowX = "hidden";')  # 隐藏滚动条
-        driver.execute_script('document.body.parentNode.style.overflowY = "hidden";')  # 隐藏滚动条
-        driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
+        driver = webdriver.Chrome(options=options, executable_path=CHROME_DRIVER_PATH)
         return driver
 
-    def use_driver(self, page_screenshot_model: PageScreenshotModel):
-        """
-        init
-
-        :param page_screenshot_model: PageScreenshotModel
-        """
-        self.model = page_screenshot_model
-        self.driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
-        return self
-
-    def url_change(self, url):
-        self.model.url = url
+    def take_url(self):
         self.driver.get(url=self.model.url)
         time.sleep(.5)
+        self.driver.set_window_position(self.model.init_window_position_x, self.model.init_window_position_y)
 
-    def capture(self):
+        # self.driver.execute_script("document.body.style.zoom='125%'")  # 修改成360浏览器
+        self.driver.execute_script('document.body.parentNode.style.overflowX = "hidden";')  # 隐藏滚动条
+        self.driver.execute_script('document.body.parentNode.style.overflowY = "hidden";')  # 隐藏滚动条
+
+        self.driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
+
+    def capture(self, page_screenshot_model: PageScreenshotModel):
         """
         生成网页截图文件
 
+        :param page_screenshot_model: PageScreenshotModel
         :return: void
         """
+        self.model = page_screenshot_model
+        self.take_url()
+
         self.model.count_image = self.scroll_to_capture()
 
         # noinspection PyBroadException
