@@ -59,9 +59,9 @@ def run_thread(url_list=None, responsive_height=None):
         time.sleep(1)
 
         # phone
-        # page_screenshot_model = screenshot_for_phone(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
-        # page_screenshot_model.img_save_path = folder
-        # page_screenshot.capture(page_screenshot_model)
+        page_screenshot_model = screenshot_for_phone(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
+        page_screenshot_model.img_save_path = folder
+        page_screenshot.capture(page_screenshot_model)
     # close
     page_screenshot.close()
 
