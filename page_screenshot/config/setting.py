@@ -19,6 +19,7 @@ CHROME_DRIVER_PATH = 'C:/opt/exe/chromedriver.exe'
 INIT_WINDOW_POSITION_X = 800
 INIT_WINDOW_POSITION_Y = 0
 JS_FILE_NAME = 'return nickname + "-" + msg_title'
+JS_MD5_URL = 'return md5(window.location.href)'
 INIT_HEIGHT = 500  # 响应式网页自行调整高度哦
 
 # 微信公众号宽屏

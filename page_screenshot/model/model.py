@@ -12,6 +12,7 @@ class PageScreenshotModel:
         page_screenshot_model = PageScreenshotModel()
         page_screenshot_model.url = url
         page_screenshot_model.img_save_path = img_save_path
+        page_screenshot_model.default_img_save_path = img_save_path
         page_screenshot_model.js_file_name = js_file_name
         page_screenshot_model.outer_width = outer_width
         page_screenshot_model.init_height = init_height
@@ -20,6 +21,7 @@ class PageScreenshotModel:
     # timestamp_with_folder = TIMESTAMP_WITH_FOLDER
     url = URL
     img_save_path = IMG_SAVE_PATH
+    default_img_save_path = IMG_SAVE_PATH
 
     base_height = BASE_HEIGHT
     scale_window = SCALE_HEIGHT

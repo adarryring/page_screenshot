@@ -44,36 +44,36 @@ def run_thread(url_list=None, responsive_height=None):
     # 建立唯一的目录
     url = url_list[0]
     page_screenshot_model = screenshot_for_pc(url=url, responsive_height=responsive_height)
-    default_img_save_path = page_screenshot_model.img_save_path
-    folder = make_unique_folder(default_img_save_path)
-    # folder = default_img_save_path
+    page_screenshot_model.img_save_path = make_unique_folder(page_screenshot_model.default_img_save_path)
+
+    # js file name
+    default_js_file_name = page_screenshot_model.js_file_name
     for url in url_list:
-        logging.info('url %s' % url)
         # 修改默认目录，重复利用model对象
         # pc
         page_screenshot_model = screenshot_for_pc(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
-        page_screenshot_model.img_save_path = folder
-        logging.info('page_screenshot_model.url %s' % page_screenshot_model.url)
         page_screenshot.capture(page_screenshot_model)
 
         time.sleep(1)
 
         # phone
         page_screenshot_model = screenshot_for_phone(url=url, page_screenshot_model=page_screenshot_model, responsive_height=responsive_height)
-        page_screenshot_model.img_save_path = folder
         page_screenshot.capture(page_screenshot_model)
+
+        # revert
+        page_screenshot_model.js_file_name = default_js_file_name
     # close
     page_screenshot.close()
 
     logging.info('move file ...')
     # move file to default path
-    for f in os.listdir(folder):
-        shutil.move(folder + '/' + f, default_img_save_path + '/' + f)
+    for f in os.listdir(page_screenshot_model.img_save_path):
+        shutil.move(page_screenshot_model.img_save_path + '/' + f, page_screenshot_model.default_img_save_path + '/' + f)
 
     # remove folder
     # noinspection PyBroadException
     try:
-        shutil.rmtree(folder)
+        shutil.rmtree(page_screenshot_model.img_save_path)
     except Exception as e:
         logging.info('remove folder error %s' % e)
 

@@ -116,7 +116,8 @@ class PageScreenshot:
         time.sleep(3)
         return times_shot
 
-    def take_driver(self):
+    @staticmethod
+    def take_driver():
         """
         生成driver
 
@@ -149,6 +150,10 @@ class PageScreenshot:
 
         self.driver.set_window_size(self.model.outer_width / self.model.scale_window, self.model.init_height)
 
+    def check(self):
+        template_file_name = self.model.default_img_save_path + '/%s' + DEFAULT_IMG_SUFFIX
+        return os.path.exists(template_file_name % self.model.file_name)
+
     def capture(self, page_screenshot_model: PageScreenshotModel):
         """
         生成网页截图文件
@@ -159,14 +164,30 @@ class PageScreenshot:
         self.model = page_screenshot_model
         self.take_url()
 
-        self.model.count_image = self.scroll_to_capture()
-
         # noinspection PyBroadException
         try:
+            # 执行指定的js脚本，建立文件名
             self.model.file_name = self.driver.execute_script(self.model.js_file_name)
         except Exception:
-            logging.info('have not set file_name, go on')
-            self.model.file_name = str(int(time.time()))
+            # noinspection PyBroadException
+            try:
+                # 使用url的md5值作为文件名
+                self.model.file_name = self.driver.execute_script(JS_MD5_URL)
+            except Exception:
+                # 使用时间戳作为文件名
+                self.model.file_name = str(int(time.time()))
+
+        # 过滤不合符文件名字符
+        self.model.file_name = self.filter_file_name(self.model.file_name)
+
+        # 检查文件是否存在
+        if self.check():
+            logging.info('图片已存在 %s' % self.model.file_name)
+            return
+
+        # capture now
+        logging.info('开始捕获截图的url %s' % page_screenshot_model.url)
+        self.model.count_image = self.scroll_to_capture()
         logging.info('merge image ...')
         self.merge()
         logging.info('remove_temp_file ...')
@@ -221,10 +242,10 @@ class PageScreenshot:
             merge_image.paste(Image.open(template_file_name % i), (0, i * h))
 
         # save to one image file
-        self.model.file_name = self.filter_file_name(self.model.file_name)
+        # noinspection PyBroadException
         try:
             merge_image.save(template_file_name % self.model.file_name)
-        except Exception as e:
+        except Exception:
             merge_image.save(template_file_name % str(int(time.time())))
-            logging.info(e)
+            logging.info('文件名称不合符 %s' % self.model.url)
         time.sleep(1)
